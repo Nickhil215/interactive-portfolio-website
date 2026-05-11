@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nikhil Vanamala — Portfolio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0e1a;color:#e8eaf0;font-family:'Space Mono',monospace;overflow:hidden;height:100vh;width:100vw;cursor:none}
+  #canvas{position:fixed;top:0;left:0;width:100%;height:100%}
+  #hud{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:100;display:flex;gap:20px;align-items:center;white-space:nowrap}
+  .hud-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;letter-spacing:4px;color:#7ef5c8;text-transform:uppercase}
+  .hud-sep{color:#2a3050;font-size:18px}
+  .hud-tip{font-size:10px;color:#4a5580;letter-spacing:2px;text-transform:uppercase}
+  #speed-meter{position:fixed;bottom:24px;right:24px;z-index:100;text-align:right}
+  .speed-val{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:#7ef5c8;line-height:1}
+  .speed-label{font-size:9px;letter-spacing:3px;color:#3a4560;text-transform:uppercase}
+  #controls-hint{position:fixed;bottom:24px;left:24px;z-index:100;display:flex;flex-direction:column;gap:4px}
+  .ctrl-row{display:flex;align-items:center;gap:8px}
+  .key{background:#1a2035;border:1px solid #2a3558;border-radius:4px;padding:3px 7px;font-size:10px;color:#7ef5c8;font-family:'Space Mono',monospace;min-width:28px;text-align:center}
+  .ctrl-label{font-size:9px;color:#3a4560;letter-spacing:1px;text-transform:uppercase}
+  #info-panel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.8);z-index:200;background:#0d1225;border:1px solid #2a3558;border-radius:12px;padding:32px 36px;max-width:480px;width:90vw;opacity:0;pointer-events:none;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+  #info-panel.visible{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+  .panel-tag{font-size:9px;letter-spacing:3px;color:#7ef5c8;text-transform:uppercase;margin-bottom:8px}
+  .panel-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:#e8eaf0;margin-bottom:6px;line-height:1.2}
+  .panel-sub{font-size:10px;color:#4a5580;letter-spacing:1px;margin-bottom:20px;border-bottom:1px solid #1a2035;padding-bottom:16px}
+  .panel-body{font-size:12px;line-height:1.8;color:#8090b0}
+  .panel-body li{list-style:none;padding:3px 0 3px 14px;position:relative}
+  .panel-body li::before{content:'▸';position:absolute;left:0;color:#7ef5c8;font-size:8px;top:5px}
+  .panel-skills{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .skill-pill{background:#141c30;border:1px solid #2a3558;border-radius:4px;padding:3px 10px;font-size:9px;color:#7ef5c8;letter-spacing:1px;text-transform:uppercase}
+  #close-btn{position:absolute;top:16px;right:16px;background:none;border:none;color:#3a4560;font-size:18px;cursor:pointer;font-family:'Space Mono',monospace;transition:color 0.2s}
+  #close-btn:hover{color:#7ef5c8}
+  #cursor{position:fixed;width:8px;height:8px;background:#7ef5c8;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen}
+  #intro{position:fixed;inset:0;z-index:500;background:#0a0e1a;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.8s ease}
+  #intro.hidden{opacity:0;pointer-events:none}
+  .intro-name{font-family:'Syne',sans-serif;font-size:clamp(32px,6vw,64px);font-weight:800;letter-spacing:-1px;color:#e8eaf0;margin-bottom:8px;text-align:center}
+  .intro-title{font-size:11px;letter-spacing:4px;color:#4a5580;text-transform:uppercase;margin-bottom:48px;text-align:center}
+  .intro-btn{background:#7ef5c8;color:#0a0e1a;border:none;padding:14px 36px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;border-radius:6px;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s}
+  .intro-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(126,245,200,0.3)}
+  .intro-desc{margin-top:24px;font-size:10px;color:#2a3558;letter-spacing:2px;text-align:center;text-transform:uppercase}
+  .intro-links{display:flex;gap:24px;margin-top:32px}
+  .intro-link{font-size:10px;color:#3a4560;text-decoration:none;letter-spacing:2px;text-transform:uppercase;transition:color 0.2s}
+  .intro-link:hover{color:#7ef5c8}
+  .section-badge{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:100;background:#1a2035;border:1px solid #2a3558;border-radius:20px;padding:6px 16px;font-size:9px;color:#7ef5c8;letter-spacing:2px;text-transform:uppercase;opacity:0;transition:opacity 0.3s;white-space:nowrap}
+  .section-badge.show{opacity:1}
+</style>
+</head>
+<body>
+<div id="cursor"></div>
+<div id="intro">
+  <div class="intro-name">Nikhil Vanamala</div>
+  <div class="intro-title">Backend Engineer &middot; MLOps &middot; AI Infrastructure</div>
+  <button class="intro-btn" id="start-btn">Start Engine &#9654;</button>
+  <div class="intro-desc">Drive around &middot; Crash into buildings to explore</div>
+  <div class="intro-links">
+    <a class="intro-link" href="mailto:nickhil215@gmail.com">Email</a>
+    <a class="intro-link" href="https://www.linkedin.com/in/nikhil-vanamala" target="_blank">LinkedIn</a>
+    <a class="intro-link" href="https://github.com/Nickhil215" target="_blank">GitHub</a>
+  </div>
+</div>
+<div id="hud">
+  <span class="hud-name">Nikhil Vanamala</span>
+  <span class="hud-sep">&middot;</span>
+  <span class="hud-tip">Drive into buildings to explore</span>
+</div>
+<div id="speed-meter">
+  <div class="speed-val" id="speed-val">0</div>
+  <div class="speed-label">km/h</div>
+</div>
+<div id="controls-hint">
+  <div class="ctrl-row">
+    <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span>
+    <span class="ctrl-label">or Arrow Keys</span>
+  </div>
+</div>
+<div class="section-badge" id="section-badge"></div>
+<div id="info-panel">
+  <button id="close-btn">&#x2715;</button>
+  <div class="panel-tag" id="panel-tag"></div>
+  <div class="panel-title" id="panel-title"></div>
+  <div class="panel-sub" id="panel-sub"></div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const cursorEl=document.getElementById('cursor');
+let W,H;
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+resize();
+window.addEventListener('resize',resize);
+document.addEventListener('mousemove',e=>{cursorEl.style.left=e.clientX+'px';cursorEl.style.top=e.clientY+'px';});
+
+const TILE=80;
+const WORLD_W=26;
+const WORLD_H=18;
+
+const sections=[
+  {id:'about',label:'About Me',wx:2,wy:2,ww:4,wh:3,color:'#0d1928',accent:'#378add',
+   tag:'Who I Am',title:'Nikhil Vanamala',sub:'Backend Engineer · 3 Years @ Gaian Solutions · Hyderabad, India',
+   body:`<ul>
+    <li>Specialise in scalable microservices, MLOps &amp; AI infrastructure on Kubernetes</li>
+    <li>Proven track record with LLMs, RAG pipelines &amp; multimodal AI generation</li>
+    <li>Measurable impact: 40–75% improvements in throughput, latency &amp; cost</li>
+    <li>Strong communicator, Agile practitioner, cross-functional collaborator</li>
+   </ul>
+   <div class="panel-skills"><span class="skill-pill">Java</span><span class="skill-pill">Python</span><span class="skill-pill">Spring Boot</span><span class="skill-pill">FastAPI</span><span class="skill-pill">Kubernetes</span><span class="skill-pill">Docker</span></div>`
+  },
+  {id:'mts3',label:'MTS-3',wx:8,wy:1,ww:5,wh:4,color:'#0a1f18',accent:'#1d9e75',
+   tag:'Jun 2025 – Present',title:'Member of Technical Staff (MTS-3)',sub:'Gaian Solutions — Current Role',
+   body:`<ul>
+    <li>Architected <strong style="color:#e8eaf0">FaaS platform</strong> (Java/Python/Node.js) on Kubernetes with Knative — 42% cost savings, 40% resource optimisation</li>
+    <li>Engineered <strong style="color:#e8eaf0">KServe pipeline</strong> for PyTorch/TensorFlow/ONNX/scikit-learn — 75% less manual effort, 45% throughput up, 40% latency down</li>
+    <li>Designed microservices for <strong style="color:#e8eaf0">Stable Diffusion, Hunyuan3D, Wan 2.2 14B</strong> — 50% throughput boost</li>
+    <li>Built <strong style="color:#e8eaf0">MLOps framework</strong> with Elyra + Kubeflow for low-code pipeline automation</li>
+   </ul>
+   <div class="panel-skills"><span class="skill-pill">Knative</span><span class="skill-pill">KServe</span><span class="skill-pill">Kubeflow</span><span class="skill-pill">Elyra</span><span class="skill-pill">KEDA</span><span class="skill-pill">Stable Diffusion</span></div>`
+  },
+  {id:'mts1',label:'MTS-1',wx:16,wy:2,ww:5,wh:4,color:'#160d28',accent:'#7f77dd',
+   tag:'Jun 2024 – Jun 2025',title:'Member of Technical Staff (MTS-1)',sub:'Gaian Solutions — RAG & Vector DB Systems',
+   body:`<ul>
+    <li><strong style="color:#e8eaf0">NLP-to-Cypher generator</strong> using LLMs + RAG — 70% reduction in manual query creation</li>
+    <li>Production microservice with <strong style="color:#e8eaf0">12+ ChromaDB endpoints</strong> for semantic search &amp; vector ops</li>
+    <li>Multi-modal APIs for <strong style="color:#e8eaf0">image, video, and audio embeddings</strong> in ChromaDB</li>
+    <li>RAG pipelines with multi-modal embeddings — 35% better relevance, 40% lower latency</li>
+    <li>Advanced chunking: semantic, recursive &amp; LLM-guided chunking strategies</li>
+   </ul>
+   <div class="panel-skills"><span class="skill-pill">ChromaDB</span><span class="skill-pill">FastAPI</span><span class="skill-pill">RAG</span><span class="skill-pill">LLMs</span><span class="skill-pill">Neo4j</span><span class="skill-pill">Redis</span></div>`
+  },
+  {id:'amts',label:'AMTS-1',wx:3,wy:10,ww:4,wh:3,color:'#1a1508',accent:'#ba7517',
+   tag:'Jun 2023 – Jun 2024',title:'Associate Member of Technical Staff',sub:'Gaian Solutions — First Role, Data Engineering',
+   body:`<ul>
+    <li>Spring Boot microservices with MongoDB &amp; TiDB — schema creation, cohort workflows, BigQuery-style ops (30% efficiency gain)</li>
+    <li>High-throughput streaming pipelines achieving <strong style="color:#e8eaf0">12k records/sec</strong> TiDB ingestion</li>
+    <li>Real-time analysis of <strong style="color:#e8eaf0">10k+ records/sec</strong> via Flink SQL API (CSV, Kafka, JSON, XML)</li>
+   </ul>
+   <div class="panel-skills"><span class="skill-pill">Spring Boot</span><span class="skill-pill">TiDB</span><span class="skill-pill">Kafka</span><span class="skill-pill">Flink</span><span class="skill-pill">MongoDB</span><span class="skill-pill">MySQL</span></div>`
+  },
+  {id:'skills',label:'Skills',wx:10,wy:10,ww:4,wh:3,color:'#081520',accent:'#378add',
+   tag:'Technical Arsenal',title:'Skills & Technologies',sub:'Full-stack backend + AI/ML infrastructure',
+   body:`<ul>
+    <li><strong style="color:#e8eaf0">Languages:</strong> Java, Python, Node.js, DSA, OOP, Multithreading</li>
+    <li><strong style="color:#e8eaf0">Frameworks:</strong> Spring Boot, Hibernate, FastAPI, Flask</li>
+    <li><strong style="color:#e8eaf0">Databases:</strong> MySQL, PostgreSQL, TiDB, MongoDB, ChromaDB, Neo4j</li>
+    <li><strong style="color:#e8eaf0">Messaging/Cache:</strong> Kafka, Redis, RabbitMQ, Celery</li>
+    <li><strong style="color:#e8eaf0">DevOps:</strong> Docker, Kubernetes, KEDA, Linux, GitHub</li>
+    <li><strong style="color:#e8eaf0">AI/ML:</strong> Kubeflow, KServe, Elyra, Stable Diffusion, LLMs, RAG</li>
+   </ul>`
+  },
+  {id:'project',label:'Projects',wx:17,wy:11,ww:4,wh:3,color:'#1a0818',accent:'#d4537e',
+   tag:'Side Projects',title:'Book My Show Clone',sub:'Spring Boot · REST API · MySQL · Hibernate',
+   body:`<ul>
+    <li>Full backend for ticket booking, show discovery &amp; movie search</li>
+    <li>12+ REST APIs covering the complete booking lifecycle</li>
+    <li>Spring Boot, JPA/Hibernate, MySQL, Maven, Postman/Swagger</li>
+   </ul>
+   <div class="panel-skills"><span class="skill-pill">Spring Boot</span><span class="skill-pill">Java</span><span class="skill-pill">MySQL</span><span class="skill-pill">Hibernate</span><span class="skill-pill">REST API</span></div>
+   <br><a href="https://github.com/Nickhil215/Book-My-Show" target="_blank" style="color:#7ef5c8;font-size:10px;letter-spacing:2px;text-decoration:none">&#8599; GITHUB REPO</a>`
+  },
+  {id:'education',label:'Education',wx:3,wy:15,ww:4,wh:2,color:'#0a150a',accent:'#639922',
+   tag:'Education',title:'B.Tech — Electrical & Electronics',sub:'Annamacharya Institute of Technology & Sciences · Hyderabad · 2019–2022',
+   body:`<ul>
+    <li>Bachelor of Technology in Electrical and Electronics Engineering</li>
+    <li>Foundation in engineering fundamentals &amp; analytical problem-solving</li>
+    <li>Self-driven transition into software engineering &amp; backend systems</li>
+   </ul>`
+  },
+  {id:'contact',label:'Contact',wx:20,wy:7,ww:4,wh:3,color:'#0d0d1a',accent:'#7ef5c8',
+   tag:'Get In Touch',title:'Contact & Links',sub:'Open to new opportunities',
+   body:`<ul>
+    <li>nickhil215@gmail.com</li>
+    <li>+91 955-088-4591</li>
+    <li>Hyderabad, Telangana, India</li>
+   </ul>
+   <div class="panel-skills">
+    <a href="https://www.linkedin.com/in/nikhil-vanamala" target="_blank" style="text-decoration:none"><span class="skill-pill" style="cursor:pointer">&#8599; LinkedIn</span></a>
+    <a href="https://github.com/Nickhil215" target="_blank" style="text-decoration:none"><span class="skill-pill" style="cursor:pointer">&#8599; GitHub</span></a>
+   </div>`
+  }
+];
+
+const car={wx:1,wy:1,vx:0,vy:0,angle:0,speed:0,trail:[]};
+const keys={};
+document.addEventListener('keydown',e=>{keys[e.key]=true;e.preventDefault&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)&&e.preventDefault();});
+document.addEventListener('keyup',e=>{keys[e.key]=false;});
+
+let panelOpen=false;
+let activeId=null;
+let cooldown=0;
+let particles=[];
+let stars=[];
+let cam={x:0,y:0};
+let gameRunning=false;
+
+for(let i=0;i<200;i++){
+  stars.push({wx:Math.random()*WORLD_W,wy:Math.random()*WORLD_H,r:Math.random()*1.2+0.2,a:Math.random()*0.35+0.05});
+}
+
+document.getElementById('start-btn').addEventListener('click',()=>{
+  document.getElementById('intro').classList.add('hidden');
+  gameRunning=true;
+  loop();
+});
+
+document.getElementById('close-btn').addEventListener('click',closePanel);
+
+function openPanel(s){
+  if(panelOpen&&activeId===s.id)return;
+  activeId=s.id;panelOpen=true;
+  document.getElementById('panel-tag').textContent=s.tag;
+  document.getElementById('panel-title').textContent=s.title;
+  document.getElementById('panel-sub').textContent=s.sub;
+  document.getElementById('panel-body').innerHTML=s.body;
+  document.getElementById('info-panel').classList.add('visible');
+}
+
+function closePanel(){
+  panelOpen=false;activeId=null;
+  document.getElementById('info-panel').classList.remove('visible');
+  cooldown=100;
+}
+
+function wts(wx,wy){return{x:(wx*TILE)-cam.x+W/2,y:(wy*TILE)-cam.y+H/2};}
+
+function drawBg(){
+  ctx.fillStyle='#0a0e1a';
+  ctx.fillRect(0,0,W,H);
+}
+
+function drawGrid(){
+  ctx.strokeStyle='rgba(25,38,68,0.7)';
+  ctx.lineWidth=0.5;
+  const sx=Math.floor((cam.x-W/2)/TILE)-1,sy=Math.floor((cam.y-H/2)/TILE)-1;
+  const ex=sx+Math.ceil(W/TILE)+3,ey=sy+Math.ceil(H/TILE)+3;
+  for(let x=sx;x<ex;x++){const p=wts(x,0);ctx.beginPath();ctx.moveTo(p.x,0);ctx.lineTo(p.x,H);ctx.stroke();}
+  for(let y=sy;y<ey;y++){const p=wts(0,y);ctx.beginPath();ctx.moveTo(0,p.y);ctx.lineTo(W,p.y);ctx.stroke();}
+}
+
+function drawRoads(){
+  const hR=[1.5,7.5,13.5];
+  const vR=[1.5,7.5,15.5,22.5];
+  hR.forEach(wy=>{
+    const p1=wts(0,wy),p2=wts(WORLD_W,wy);
+    ctx.strokeStyle='rgba(30,45,80,0.7)';ctx.lineWidth=TILE*0.65;
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+    ctx.strokeStyle='rgba(50,70,110,0.5)';ctx.lineWidth=1;ctx.setLineDash([18,18]);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();ctx.setLineDash([]);
+  });
+  vR.forEach(wx=>{
+    const p1=wts(wx,0),p2=wts(wx,WORLD_H);
+    ctx.strokeStyle='rgba(30,45,80,0.7)';ctx.lineWidth=TILE*0.65;
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();
+    ctx.strokeStyle='rgba(50,70,110,0.5)';ctx.lineWidth=1;ctx.setLineDash([18,18]);
+    ctx.beginPath();ctx.moveTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.stroke();ctx.setLineDash([]);
+  });
+}
+
+function drawStars(){
+  stars.forEach(st=>{
+    const p=wts(st.wx,st.wy);
+    if(p.x<-10||p.x>W+10||p.y<-10||p.y>H+10)return;
+    ctx.beginPath();ctx.arc(p.x,p.y,st.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(100,150,220,${st.a})`;ctx.fill();
+  });
+}
+
+function drawSections(){
+  sections.forEach(s=>{
+    const pos=wts(s.wx,s.wy);
+    const pw=s.ww*TILE,ph=s.wh*TILE;
+    // Shadow
+    ctx.fillStyle='rgba(0,0,0,0.5)';ctx.fillRect(pos.x+5,pos.y+5,pw,ph);
+    // Body
+    ctx.fillStyle=s.color;ctx.fillRect(pos.x,pos.y,pw,ph);
+    // Accent bar
+    ctx.fillStyle=s.accent;ctx.fillRect(pos.x,pos.y,pw,5);
+    // Border
+    ctx.strokeStyle=s.accent+'55';ctx.lineWidth=1;ctx.strokeRect(pos.x,pos.y,pw,ph);
+    // Windows
+    const cols=Math.max(2,Math.floor(s.ww*1.8)),rows=Math.max(2,Math.floor(s.wh*1.5));
+    const ww=(pw-20)/cols,wh=(ph-22)/rows;
+    for(let c=0;c<cols;c++){
+      for(let r=0;r<rows;r++){
+        const lit=Math.random()>0.35;
+        ctx.fillStyle=lit?s.accent+'40':'rgba(255,255,255,0.04)';
+        ctx.fillRect(pos.x+10+c*ww,pos.y+16+r*wh,ww-3,wh-3);
+      }
+    }
+    // Label
+    ctx.fillStyle=s.accent;ctx.font='bold 10px Space Mono,monospace';ctx.textAlign='center';
+    ctx.fillText(s.label.toUpperCase(),pos.x+pw/2,pos.y+ph/2-10);
+    ctx.fillStyle='rgba(255,255,255,0.18)';ctx.font='8px Space Mono,monospace';
+    ctx.fillText('[ DRIVE INTO ]',pos.x+pw/2,pos.y+ph/2+8);
+  });
+}
+
+function drawTrail(){
+  car.trail.forEach((pt,i)=>{
+    const p=wts(pt.wx,pt.wy);
+    const a=(i/car.trail.length)*0.12;
+    ctx.beginPath();ctx.arc(p.x,p.y,2,0,Math.PI*2);
+    ctx.fillStyle=`rgba(126,245,200,${a})`;ctx.fill();
+  });
+}
+
+function drawCar(){
+  const pos=wts(car.wx,car.wy);
+  ctx.save();ctx.translate(pos.x,pos.y);ctx.rotate(car.angle);
+  const W2=38,H2=20;
+  ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.ellipse(4,5,W2/2,H2/2.5,0,0,Math.PI*2);ctx.fill();
+  // Body
+  ctx.fillStyle='#dde4f0';ctx.beginPath();
+  if(ctx.roundRect){ctx.roundRect(-W2/2,-H2/2,W2,H2,5);}else{ctx.rect(-W2/2,-H2/2,W2,H2);}
+  ctx.fill();
+  // Cabin
+  ctx.fillStyle='#0d1530';ctx.beginPath();
+  if(ctx.roundRect){ctx.roundRect(-W2/4,-H2/2+3,W2/2,H2*0.55,3);}else{ctx.rect(-W2/4,-H2/2+3,W2/2,H2*0.55);}
+  ctx.fill();
+  // Windshield
+  ctx.fillStyle='rgba(126,245,200,0.15)';ctx.beginPath();
+  if(ctx.roundRect){ctx.roundRect(-W2/4+2,-H2/2+5,W2/2-4,H2*0.28,2);}else{ctx.rect(-W2/4+2,-H2/2+5,W2/2-4,H2*0.28);}
+  ctx.fill();
+  // Headlights
+  const hl=Math.abs(car.speed)>0.005;
+  ctx.fillStyle=hl?'#ffffcc':'rgba(255,255,100,0.4)';
+  ctx.fillRect(W2/2-5,-H2/2+2,5,4);ctx.fillRect(W2/2-5,H2/2-6,5,4);
+  // Tail lights
+  ctx.fillStyle='#ff4444bb';
+  ctx.fillRect(-W2/2,-H2/2+2,4,4);ctx.fillRect(-W2/2,H2/2-6,4,4);
+  // Wheels
+  ctx.fillStyle='#05080f';
+  [[-W2/2+4,-H2/2-2],[-W2/2+4,H2/2-2],[W2/2-12,-H2/2-2],[W2/2-12,H2/2-2]].forEach(([x,y])=>{ctx.fillRect(x,y,10,4);});
+  ctx.restore();
+}
+
+function drawParticles(){
+  particles=particles.filter(p=>p.life>0);
+  particles.forEach(p=>{
+    const pos=wts(p.wx,p.wy);
+    const a=(p.life/p.ml)*0.8;
+    ctx.beginPath();ctx.arc(pos.x,pos.y,p.s*(p.life/p.ml),0,Math.PI*2);
+    ctx.fillStyle=`rgba(126,245,200,${a})`;ctx.fill();
+    p.wx+=p.dvx*0.012;p.wy+=p.dvy*0.012;p.life--;
+  });
+}
+
+function spawnParticles(wx,wy){
+  for(let i=0;i<24;i++){
+    const a=Math.random()*Math.PI*2,sp=Math.random()*3+1;
+    particles.push({wx,wy,dvx:Math.cos(a)*sp,dvy:Math.sin(a)*sp,s:Math.random()*3+1,life:Math.random()*30+20,ml:50});
+  }
+}
+
+function updateCar(){
+  if(panelOpen){car.speed*=0.88;return;}
+  const acc=0.0025,maxSpd=0.11,fric=0.91,turn=0.048;
+  const fwd=keys['ArrowUp']||keys['w']||keys['W'];
+  const bck=keys['ArrowDown']||keys['s']||keys['S'];
+  const lft=keys['ArrowLeft']||keys['a']||keys['A'];
+  const rgt=keys['ArrowRight']||keys['d']||keys['D'];
+  if(fwd)car.speed=Math.min(car.speed+acc,maxSpd);
+  if(bck)car.speed=Math.max(car.speed-acc,-maxSpd*0.5);
+  car.speed*=fric;
+  if(Math.abs(car.speed)>0.001){
+    if(lft)car.angle-=turn*(car.speed>0?1:-1);
+    if(rgt)car.angle+=turn*(car.speed>0?1:-1);
+  }
+  let nx=car.wx+Math.cos(car.angle)*car.speed;
+  let ny=car.wy+Math.sin(car.angle)*car.speed;
+  nx=Math.max(0.3,Math.min(WORLD_W-0.3,nx));
+  ny=Math.max(0.3,Math.min(WORLD_H-0.3,ny));
+  if(cooldown>0)cooldown--;
+  const cl=nx-0.25,cr=nx+0.25,ct=ny-0.14,cb=ny+0.14;
+  let hit=false;
+  for(const s of sections){
+    if(cr>s.wx&&cl<s.wx+s.ww&&cb>s.wy&&ct<s.wy+s.wh){
+      hit=true;
+      if(cooldown===0){spawnParticles(car.wx,car.wy);openPanel(s);cooldown=120;}
+      car.speed*=-0.3;nx=car.wx;ny=car.wy;break;
+    }
+  }
+  car.wx=nx;car.wy=ny;
+  car.trail.push({wx:car.wx,wy:car.wy});
+  if(car.trail.length>70)car.trail.shift();
+  document.getElementById('speed-val').textContent=Math.abs(Math.round(car.speed*800));
+}
+
+function updateCam(){
+  const tx=(car.wx*TILE),ty=(car.wy*TILE);
+  cam.x+=(tx-cam.x)*0.1;cam.y+=(ty-cam.y)*0.1;
+}
+
+function vignette(){
+  const g=ctx.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.85);
+  g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,0.65)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+}
+
+function loop(){
+  if(!gameRunning)return;
+  requestAnimationFrame(loop);
+  updateCam();updateCar();
+  drawBg();drawGrid();drawStars();drawRoads();drawSections();drawTrail();drawParticles();drawCar();vignette();
+}
+</script>
+</body>
+</html>
